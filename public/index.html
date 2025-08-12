@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Yeni BES Formu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .form-wrapper {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 1100px;
+      margin: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input, select, textarea, button {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .taleep-note {
+      min-height: 160px;
+      resize: vertical;
+    }
+    .bottom-section {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-wrapper">
+    <!-- Konu ve Alt Konu Seçimi -->
+    <div class="row">
+      <div class="form-group">
+        <label for="konu">Konu</label>
+        <select id="konu">
+          <option value="">Seçiniz</option>
+          <option value="konu1">Konu 1</option>
+          <option value="konu2">Konu 2</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="altKonu">Alt Konu</label>
+        <select id="altKonu">
+          <option value="">Seçiniz</option>
+          <option value="alt1">Alt Konu 1</option>
+          <option value="alt2">Alt Konu 2</option>
+          <option value="alt3">Alt Konu 3</option>
+          <option value="alt4">Alt Konu 4</option>
+        </select>
+      </div>
+
+      <!-- Talep Notu -->
+      <div class="form-group right-column" style="min-width: 200px;">
+        <label>Talep Notu</label>
+        <textarea id="talepNotu" class="taleep-note" placeholder="Notunuzu giriniz..."></textarea>
+      </div>
+    </div>
+
+    <!-- Bilgi Alanları -->
+    <div class="row">
+      <div class="form-group">
+        <label>TC*</label>
+        <input type="text" id="tc" required>
+      </div>
+      <div class="form-group">
+        <label>Ad Soyad*</label>
+        <input type="text" id="isim" required>
+      </div>
+      <div class="form-group">
+        <label>Poliçe No*</label>
+        <input type="text" id="police" required>
+      </div>
+    </div>
+
+    <!-- Doküman Şablonu -->
+    <div class="bottom-section">
+      <div class="form-group" style="flex: 1;">
+        <label>Doküman Şablonu</label>
+        <select id="sablon">
+          <option value="">Seçiniz</option>
+          <option value="sablon1">Şablon 1</option>
+          <option value="sablon2">Şablon 2</option>
+        </select>
+      </div>
+      <button type="button" id="yazdirBtn">Şablonu Yazdır</button>
+    </div>
+  </div> 
+    <!-- Zorunlu Belgeler -->
+    <div class="row">
+      <div class="form-group" style="flex: 1;">
+        <h3>Zorunlu Belgeler</h3>
+        <p><strong>Kimlik</strong> <span class="required">*</span></p>
+        <input type="file" id="kimlik" class="file-input" accept="image/*,application/pdf" required>
+        <p><strong>Dilekçe</strong> <span class="required">*</span></p>
+        <input type="file" id="dilekce" class="file-input" accept="image/*,application/pdf" required>
+      </div>
+    </div>
+<script>
+document.getElementById("yazdirBtn").addEventListener("click", function () {
+  const tc = document.getElementById("tc").value.trim();
+  const isim = document.getElementById("isim").value.trim().toLowerCase();
+  const policeNo = document.getElementById("police").value.trim();
+
+  const kimlikFile = document.getElementById("kimlik").files[0];
+  const dilekceFile = document.getElementById("dilekce").files[0];
+
+  if (!tc || !isim || !policeNo) {
+    alert("Lütfen tüm alanları doldurunuz.");
+    return;
+  }
+
+  fetch("/api/bes")
+    .then(res => res.json())
+    .then(data => {
+      const kayit = data.find(k => String(k.police_no) === policeNo);
+
+      if (!kayit) {
+        alert("Poliçe bulunamadı.");
+        return;
+      }
+
+      const kayitTC = String(kayit.tc_kimlik_no).trim();
+      const kayitIsim = String(kayit.katilimci_ad_soyad).trim().toLowerCase();
+
+      if (kayitTC !== tc || kayitIsim !== isim) {
+        alert("TC veya Ad Soyad bilgileri hatalı.");
+        return;
+      }
+
+      //  Yeni sekme içeriği burada oluşturuluyor
+      const html = `
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+          <meta charset="UTF-8">
+          <title>BES Bilgi Özeti</title>
+          <style>
+            body { font-family: Arial; padding: 40px; }
+            h2 { text-align: center; }
+            p { margin: 8px 0; }
+            .flex { display: flex; gap: 20px; }
+            .column { width: 50%; }
+            strong { display: inline-block; width: 300px; }
+          </style>
+        </head>
+        <body>
+          <h2>BES Bilgi Özeti</h2>
+          <p><strong>Sözleşme No:</strong> ${kayit.sozlesme_no}</p>
+          <p><strong>Katılımcı No:</strong> ${kayit.katilimci_no}</p>
+          <p><strong>Katılımcı Ad Soyad:</strong> ${kayit.katilimci_ad_soyad}</p>
+          <p><strong>Ödeyen No:</strong> ${kayit.odeyen_no || '-'}</p>
+          <p><strong>Ödeyen Ad Soyad:</strong> ${kayit.odeyen_ad_soyad}</p>
+          <p><strong>Ürün Durumu:</strong> ${kayit.urun_durumu}</p>
+          <p><strong>Sözleşme Tipi:</strong> ${kayit.sozlesme_tipi}</p>
+
+          <!-- ALT BÖLÜM BURADA BAŞLIYOR -->
+<div class="ayirici-bolum">
+  <div class="flex">
+    <div class="column">
+      <p><strong>Teklif No:</strong> ${kayit.teklif_no}</p>
+      <p><strong>Teklif Başlangıç Tarihi:</strong> ${kayit.teklif_baslangic_tarihi}</p>
+      <p><strong>Sözleşme Yürürlük Tarihi:</strong> ${kayit.sozlesme_yururluluk_tarihi}</p>
+      <p><strong>BES Giriş Tarihi:</strong> ${kayit.bes_giris_tarihi}</p>
+      <p><strong>Muhtemel Emeklilik Tarihi:</strong> ${kayit.muhtemel_emeklilik_tarihi}</p>
+    </div>
+    <div class="column">
+      <p><strong>Lehtar Ad Soyad:</strong> ${kayit.lehtar_ad_soyad}</p>
+      <p><strong>Şube No:</strong> ${kayit.sozlesme_uretim_sube_no}</p>
+      <p><strong>Şube Adı:</strong> ${kayit.sozlesme_uretim_sube_ad}</p>
+      <p><strong>BES Aracısı:</strong> ${kayit.bes_aracisi}</p>
+      <p><strong>Düzensiz Ödeme Durumu:</strong> ${kayit.duzensiz_odeme_durumu}</p>
+      <p><strong>Devlet Katkısı:</strong> ${kayit.devlet_katki_ust_sinir_tutar} TL</p>
+      <p><strong>Hakediş Süresi:</strong> ${kayit.hakedis_suresi}</p>
+      <p><strong>Hakediş Tutarı:</strong> ${kayit.hakedis_tutari} TL</p>
+    </div>
+  </div>
+</div>
+          <hr>
+          <h3> Soru Sorun & AI Cevabı</h3>
+          <textarea id="aiInput" rows="4" style="width:100%; margin-top:10px;" placeholder="Bir soru ya da not yazın..."></textarea>
+          <br>
+          <button onclick="getAIComment()" style="margin-top:10px;">Yorum Al (AI)</button>
+          <div id="aiCevap" style="white-space:pre-wrap; background:#f9f9f9; padding:15px; margin-top:10px; border:1px solid #ccc;"></div>
+
+          <script>
+            const kayit = ${JSON.stringify(kayit)};
+            async function getAIComment() {
+              const userInput = document.getElementById("aiInput")?.value || "";
+              const outputDiv = document.getElementById("aiCevap");
+              const prompt = \`
+                  Bir müşteri BES sisteminden destek istiyor.
+                  Müşteri bilgileri:
+                  - Ad Soyad: ${kayit.katilimci_ad_soyad}
+                  - Poliçe No: ${kayit.police_no}
+                  - Sözleşme Tipi: ${kayit.sozlesme_tipi}
+                  - Ürün Durumu: ${kayit.urun_durumu}
+                  - Devlet Katkısı: ${kayit.devlet_katki_ust_sinir_tutar}
+                  - Hakediş Tutarı: ${kayit.hakedis_tutari}
+                  - Hakediş Süresi: ${kayit.hakedis_suresi}
+
+                  Bu müşteri için uygun öneri veya yönlendirme ne olabilir?
+                  Kısa ve net 1-2 öneri ya da soru yaz.
+                \`;
+
+              try {
+                const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=KEY YAZILMALI ", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                  })
+                });
+                const data = await response.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yanıt alınamadı.";
+                outputDiv.innerHTML = "<strong>Yapay Zeka Yanıtı:</strong><br><br>" + reply.replace(/\\n/g, "<br>");
+              } catch (err) {
+                console.error("AI Hatası:", err);
+                alert("Yapay zeka yanıtı alınamadı.");
+              }
+            }
+            <\/script>
+          </body>
+        </html>
+        `;
+;
+
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(html);
+      newWindow.document.close();
+      newWindow.focus();
+      setTimeout(() => newWindow.print(), 500);
+    })
+    .catch(error => {
+      console.error("Hata oluştu:", error);
+      alert("Bir hata oluştu. Lütfen tekrar deneyin.");
+    });
+});
+
+  
+</script>
+</body>
+</html>

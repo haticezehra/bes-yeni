@@ -1,0 +1,24 @@
+{
+  "name": "bes-proje",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haticezehra/zt_Proje.git"
+  },
+  "bugs": {
+    "url": "https://github.com/haticezehra/zt_Proje/issues"
+  },
+  "homepage": "https://github.com/haticezehra/zt_Proje#readme",
+  "description": ""
+}
